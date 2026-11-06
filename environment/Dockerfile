@@ -5,6 +5,7 @@
 
 FROM ubuntu:22.04
 
+# This is a test of a modified file with secrets
 LABEL maintainer="security-test@example.com"
 ENV DEBIAN_FRONTEND=noninteractive
 
