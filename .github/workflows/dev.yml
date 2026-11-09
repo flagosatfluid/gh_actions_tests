@@ -4,7 +4,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  sast-full:
+  sca-full:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: fluidattacks/sast-action@flagos
+      - uses: fluidattacks/sca-action@flagos
         id: scan
         with:
           scan_config_path: .github/.fluidattacks.yaml
@@ -30,7 +30,7 @@ jobs:
         if: steps.scan.outputs.vulnerabilities_found == 'true'
         run: exit 1
 
-  sast-diff:
+  sca-diff:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -41,7 +41,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: fluidattacks/sast-action@flagos
+      - uses: fluidattacks/sca-action@flagos
         id: scan
         with:
           scan_config_path: .github/.fluidattacks.yaml
@@ -57,12 +57,12 @@ jobs:
         if: steps.scan.outputs.vulnerabilities_found == 'true'
         run: exit 1
 
-  sast-no-config:
+  sca-no-config:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: fluidattacks/sast-action@flagos
+      - uses: fluidattacks/sca-action@flagos
         id: scan
         with:
           strict: true
