@@ -1,5 +1,4 @@
 language: EN
-strictness_threshold: medium
 output:
   file_path: fluidattacks-results.sarif
   format: SARIF
@@ -22,4 +21,4 @@ dast:
   strict_connectivity: True
   urls:
     - url: https://www.fluidattacks.com
-    - url: https://www.unreachableenvironment.co
+    - url: https://www.google.com

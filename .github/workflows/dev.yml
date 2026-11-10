@@ -4,7 +4,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  sca-full:
+  dast-config:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -13,66 +13,54 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: fluidattacks/sca-action@flagos
+      - uses: fluidattacks/dast-action@flagos
         id: scan
         with:
           scan_config_path: .github/.fluidattacks.yaml
           group: machinetest
-
-      - name: Show outputs
-        run: |
-          echo "skip=${{ steps.scan.outputs.skip }}"
-          echo "vulnerabilities_found=${{ steps.scan.outputs.vulnerabilities_found }}"
-          echo "sarif_file=${{ steps.scan.outputs.sarif_file }}"
-          test -f "${{ steps.scan.outputs.sarif_file }}"
-
-      - name: Fail if vulnerabilities found
-        if: steps.scan.outputs.vulnerabilities_found == 'true'
-        run: exit 1
-
-  sca-diff:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-      security-events: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: fluidattacks/sca-action@flagos
-        id: scan
-        with:
-          scan_config_path: .github/.fluidattacks.yaml
-          scanner_mode: diff
-          group: machinetest
-
-      - name: Show outputs
-        run: |
-          echo "skip=${{ steps.scan.outputs.skip }}"
-          echo "vulnerabilities_found=${{ steps.scan.outputs.vulnerabilities_found }}"
-
-      - name: Fail if vulnerabilities found
-        if: steps.scan.outputs.vulnerabilities_found == 'true'
-        run: exit 1
-
-  sca-no-config:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: fluidattacks/sca-action@flagos
-        id: scan
-        with:
-          strict: true
 
       - name: Show outputs
         if: always()
         run: |
+          echo "vulnerabilities_found=${{ steps.scan.outputs.vulnerabilities_found }}"
           echo "sarif_file=${{ steps.scan.outputs.sarif_file }}"
           test -f "${{ steps.scan.outputs.sarif_file }}"
 
       - name: Fail if vulnerabilities found
         if: steps.scan.outputs.vulnerabilities_found == 'true'
         run: exit 1
+
+  dast-no-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: fluidattacks/dast-action@flagos
+        id: scan
+        continue-on-error: true
+
+      - name: The action must fail without scan_config_path
+        run: |
+          test "${{ steps.scan.outcome }}" = "failure"
+
+  dast-strict-true:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: fluidattacks/dast-action@flagos
+        id: scan
+        continue-on-error: true
+        with:
+          scan_config_path: .github/.fluidattacks.yaml
+          strict: true
+
+      - name: The step fails exactly when vulnerabilities are found
+        run: |
+          echo "vulnerabilities_found=${{ steps.scan.outputs.vulnerabilities_found }}"
+          echo "outcome=${{ steps.scan.outcome }}"
+          if [ "${{ steps.scan.outputs.vulnerabilities_found }}" = "true" ]; then
+            test "${{ steps.scan.outcome }}" = "failure"
+          else
+            test "${{ steps.scan.outcome }}" = "success"
+          fi
